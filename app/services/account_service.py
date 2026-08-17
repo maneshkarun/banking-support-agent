@@ -55,4 +55,3 @@ class AccountService:
             currency=account.currency,
             balance=account.balance,
         )
-

@@ -1,6 +1,7 @@
 """SQLAlchemy engine, session, and declarative base configuration."""
 
-from collections.abc import Generator
+from collections.abc import Generator, Iterator
+from contextlib import contextmanager
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
@@ -18,9 +19,16 @@ engine = create_engine(settings.database_url, connect_args=connect_args, pool_pr
 SessionLocal = sessionmaker(bind=engine, autoflush=False, expire_on_commit=False)
 
 
-def get_db() -> Generator[Session, None, None]:
-    """Provide a request-scoped database session and always close it."""
+@contextmanager
+def session_scope() -> Iterator[Session]:
+    """Open a database session and guarantee that it is closed after use."""
 
     with SessionLocal() as session:
         yield session
 
+
+def get_db() -> Generator[Session, None, None]:
+    """Provide a request-scoped database session for FastAPI dependencies."""
+
+    with session_scope() as session:
+        yield session
