@@ -7,9 +7,10 @@ from sqlalchemy.orm import Session
 
 from app.models.account import Account
 from app.models.customer import Customer
-from app.schemas.account import AccountCreate, BalanceResponse
+from app.schemas.account import AccountCreate, BalanceResponse, AccountResponse
 from app.services.exceptions import NotFoundError
 
+from typing import List
 
 class AccountService:
     """Provide account opening, information, and balance operations."""
@@ -19,10 +20,10 @@ class AccountService:
 
         self.session = session
 
-    def create(self, payload: AccountCreate) -> Account:
+    def create(self, customer_id: int, payload: AccountCreate) -> Account:
         """Open an account for an existing customer with a unique number."""
 
-        if self.session.get(Customer, payload.customer_id) is None:
+        if self.session.get(Customer, customer_id) is None:
             raise NotFoundError("Customer not found")
         account = Account(
             account_number=f"AC{token_hex(8).upper()}",
@@ -36,20 +37,28 @@ class AccountService:
         self.session.refresh(account)
         return account
 
-    def get(self, account_number: str) -> Account:
+    def get(self, customer_id: int, account_number: str) -> Account:
         """Return account information by account number."""
 
         account = self.session.scalar(
-            select(Account).where(Account.account_number == account_number)
+            select(Account).where(Account.account_number == account_number and Account.customer_id == customer_id)
         )
         if account is None:
             raise NotFoundError("Account not found")
         return account
-
-    def get_balance(self, account_number: str) -> BalanceResponse:
+    
+    def get_customer_account(self, customer_id: int) -> List[AccountResponse]:
+        accounts = self.session.scalars(
+            select(Account).where(Account.customer_id == customer_id)
+        ).all()
+        return [
+            AccountResponse.model_validate(account) for account in accounts
+        ]
+    
+    def get_balance(self, customer_id: int, account_number: str) -> BalanceResponse:
         """Return the current ledger balance for an account."""
 
-        account = self.get(account_number)
+        account = self.get(customer_id, account_number)
         return BalanceResponse(
             account_number=account.account_number,
             currency=account.currency,

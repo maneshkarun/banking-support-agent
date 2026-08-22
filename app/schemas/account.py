@@ -22,7 +22,6 @@ class AccountResponse(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
-    id: int
     account_number: str
     customer_id: int
     account_type: AccountType

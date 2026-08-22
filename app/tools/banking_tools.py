@@ -1,6 +1,6 @@
 """LangChain tools that expose read-only banking operations."""
 
-from typing import Any
+from typing import Any, List
 
 from langchain.tools import tool
 
@@ -25,7 +25,14 @@ def get_customer_details(customer_id: int) -> dict[str, Any]:
         customer = CustomerService(session).get(customer_id)
         return _json_result(CustomerResponse.model_validate(customer))
 
-
+@tool
+def get_customer_accounts(customer_id: int) -> List[dict]:
+    """Fetch all the account details given a customer id"""
+    with session_scope() as session:
+        accounts = AccountService(session).get_customer_account(customer_id)
+        return [
+            _json_result(account) for account in accounts
+        ]
 @tool
 def get_account_balance(account_number: str) -> dict[str, Any]:
     """Fetch the current balance and currency using an account number."""
@@ -37,7 +44,7 @@ def get_account_balance(account_number: str) -> dict[str, Any]:
 
 @tool
 def get_complete_account_details(account_number: str) -> dict[str, Any]:
-    """Fetch complete account details using an account number."""
+    """Fetch account details given an account number."""
 
     with session_scope() as session:
         account = AccountService(session).get(account_number)

@@ -4,7 +4,7 @@ from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
-
+from app.schemas.account import AccountResponse
 class CustomerCreate(BaseModel):
     """Fields required to register a customer."""
 

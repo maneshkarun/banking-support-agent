@@ -1,6 +1,6 @@
 """Version 1 banking API routes."""
 
-from typing import Annotated
+from typing import Annotated, List, Any
 
 from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.orm import Session
@@ -12,9 +12,11 @@ from app.schemas.transaction import TransactionCreate, TransactionResponse
 from app.services.account_service import AccountService
 from app.services.customer_service import CustomerService
 from app.services.transaction_service import TransactionService
+from app.agents.dependencies import get_banking_agent
 
 router = APIRouter(prefix="/api/v1")
 DbSession = Annotated[Session, Depends(get_db)]
+BankingAgent = Annotated[Any, Depends(get_banking_agent)]
 
 
 @router.post("/customers", response_model=CustomerResponse, status_code=status.HTTP_201_CREATED)
@@ -30,26 +32,30 @@ def get_customer(customer_id: int, db: DbSession) -> CustomerResponse:
 
     return CustomerResponse.model_validate(CustomerService(db).get(customer_id))
 
+@router.get("/customers/{customer_id}/accounts")
+def get_customer_accounts(customer_id: int, db: DbSession) -> List[AccountResponse]:
+    """Gets account no linked to a specific customer"""
+    return AccountService(db).get_customer_account(customer_id)
 
-@router.post("/accounts", response_model=AccountResponse, status_code=status.HTTP_201_CREATED)
-def create_account(payload: AccountCreate, db: DbSession) -> AccountResponse:
+@router.post("/customers/{customer_id}/accounts", response_model=AccountResponse, status_code=status.HTTP_201_CREATED)
+def create_account(customer_id: int, payload: AccountCreate, db: DbSession) -> AccountResponse:
     """Open an account for an existing customer."""
 
-    return AccountResponse.model_validate(AccountService(db).create(payload))
+    return AccountResponse.model_validate(AccountService(db).create(customer_id, payload))
 
 
-@router.get("/accounts/{account_number}", response_model=AccountResponse)
-def get_account(account_number: str, db: DbSession) -> AccountResponse:
+@router.get("/customers/{customer_id}/accounts/{account_number}", response_model=AccountResponse)
+def get_account(customer_id: int, account_number: str, db: DbSession) -> AccountResponse:
     """Retrieve account information."""
 
-    return AccountResponse.model_validate(AccountService(db).get(account_number))
+    return AccountResponse.model_validate(AccountService(db).get(customer_id, account_number))
 
 
-@router.get("/accounts/{account_number}/balance", response_model=BalanceResponse)
-def get_balance(account_number: str, db: DbSession) -> BalanceResponse:
+@router.get("/customers/{customer_id}/accounts/{account_number}/balance", response_model=BalanceResponse)
+def get_balance(customer_id: int, account_number: str, db: DbSession) -> BalanceResponse:
     """Retrieve the current account balance."""
 
-    return AccountService(db).get_balance(account_number)
+    return AccountService(db).get_balance(customer_id, account_number)
 
 
 @router.post(
@@ -80,3 +86,25 @@ def list_transactions(
 
     transactions = TransactionService(db).list_for_account(account_number, limit, offset)
     return [TransactionResponse.model_validate(transaction) for transaction in transactions]
+
+
+@router.post("/chat")
+def chat(
+    message: str,
+    agent: BankingAgent,
+):
+    result = agent.invoke(
+        {"messages": [{"role": "user", "content": message}]},
+        config={
+            "run_name": "banking-chat",
+            "tags": ["banking-agent"],
+            "metadata": {
+                "environment": "development",
+                "agent_version": "v1",
+            },
+        },
+    )
+
+    return {
+        "response": result["messages"][-1].content
+    }

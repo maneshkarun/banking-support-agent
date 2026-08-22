@@ -11,13 +11,15 @@ from app.api.routes import router
 from app.core.config import get_settings
 from app.core.database import Base, engine
 from app.services.exceptions import BusinessRuleError, ConflictError, NotFoundError
-
+from app.agents.agent import build_agent
 
 @asynccontextmanager
-async def lifespan(_: FastAPI) -> AsyncIterator[None]:
+async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     """Create database tables on startup for this lightweight application."""
 
     Base.metadata.create_all(bind=engine)
+    app.state.banking_agent = build_agent()
+
     yield
 
 
