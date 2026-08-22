@@ -40,3 +40,5 @@ def build_agent() -> Any:
 
 # if __name__ == "__main__":
 #     main()
+
+agent = build_agent()

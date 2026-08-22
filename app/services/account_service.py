@@ -37,7 +37,7 @@ class AccountService:
         self.session.refresh(account)
         return account
 
-    def get(self, customer_id: int, account_number: str) -> Account:
+    def get(self, account_number: str, customer_id: int | None = None) -> Account:
         """Return account information by account number."""
 
         account = self.session.scalar(
@@ -58,7 +58,7 @@ class AccountService:
     def get_balance(self, customer_id: int, account_number: str) -> BalanceResponse:
         """Return the current ledger balance for an account."""
 
-        account = self.get(customer_id, account_number)
+        account = self.get(account_number, customer_id)
         return BalanceResponse(
             account_number=account.account_number,
             currency=account.currency,

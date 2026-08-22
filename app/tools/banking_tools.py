@@ -34,7 +34,7 @@ def get_customer_accounts(customer_id: int) -> List[dict]:
             _json_result(account) for account in accounts
         ]
 @tool
-def get_account_balance(account_number: str) -> dict[str, Any]:
+def get_account_balance(account_number: str, customer_id: int | None = None) -> dict[str, Any]:
     """Fetch the current balance and currency using an account number."""
 
     with session_scope() as session:

@@ -2,7 +2,12 @@
 
 from functools import lru_cache
 
+from dotenv import load_dotenv
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+# Load .env into os.environ so third-party SDKs (e.g. LangSmith) can read
+# their env vars. pydantic-settings only uses .env for its own fields.
+load_dotenv()
 
 
 class Settings(BaseSettings):
