@@ -19,12 +19,12 @@ class TransactionService:
 
         self.session = session
 
-    def create(self, account_number: str, payload: TransactionCreate) -> Transaction:
+    def create(self, customer_id: int, account_number: str, payload: TransactionCreate) -> Transaction:
         """Atomically post a credit or debit and update the account balance."""
 
         account = self.session.scalar(
             select(Account)
-            .where(Account.account_number == account_number)
+            .where(Account.customer_id == customer_id and Account.account_number == account_number)
             .with_for_update()
         )
         if account is None:
@@ -51,11 +51,11 @@ class TransactionService:
         self.session.refresh(transaction)
         return transaction
 
-    def list_for_account(self, account_number: str, limit: int, offset: int) -> list[Transaction]:
+    def list_for_account(self, customer_id: int, account_number: str, limit: int, offset: int) -> list[Transaction]:
         """Return reverse-chronological paginated transaction history."""
 
         account = self.session.scalar(
-            select(Account).where(Account.account_number == account_number)
+            select(Account).where(Account.customer_id == customer_id and Account.account_number == account_number)
         )
         if account is None:
             raise NotFoundError("Account not found")

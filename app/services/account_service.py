@@ -37,7 +37,7 @@ class AccountService:
         self.session.refresh(account)
         return account
 
-    def get(self, account_number: str, customer_id: int | None = None) -> Account:
+    def get(self, customer_id: int, account_number: str) -> Account:
         """Return account information by account number."""
 
         account = self.session.scalar(

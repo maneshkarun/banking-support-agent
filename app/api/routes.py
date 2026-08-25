@@ -59,24 +59,25 @@ def get_balance(customer_id: int, account_number: str, db: DbSession) -> Balance
 
 
 @router.post(
-    "/accounts/{account_number}/transactions",
+    "/customers/{customers_id}/accounts/{account_number}/transactions",
     response_model=TransactionResponse,
     status_code=status.HTTP_201_CREATED,
 )
 def create_transaction(
-    account_number: str, payload: TransactionCreate, db: DbSession
+    customer_id: int, account_number: str, payload: TransactionCreate, db: DbSession
 ) -> TransactionResponse:
     """Post a credit or debit transaction."""
 
     return TransactionResponse.model_validate(
-        TransactionService(db).create(account_number, payload)
+        TransactionService(db).create(customer_id, account_number, payload)
     )
 
 
 @router.get(
-    "/accounts/{account_number}/transactions", response_model=list[TransactionResponse]
+    "/customers/{customers_id}/accounts/{account_number}/transactions", response_model=list[TransactionResponse]
 )
 def list_transactions(
+    customer_id: int,
     account_number: str,
     db: DbSession,
     limit: Annotated[int, Query(ge=1, le=100)] = 20,
@@ -84,7 +85,7 @@ def list_transactions(
 ) -> list[TransactionResponse]:
     """Retrieve paginated transaction history."""
 
-    transactions = TransactionService(db).list_for_account(account_number, limit, offset)
+    transactions = TransactionService(db).list_for_account(customer_id, account_number, limit, offset)
     return [TransactionResponse.model_validate(transaction) for transaction in transactions]
 
 
