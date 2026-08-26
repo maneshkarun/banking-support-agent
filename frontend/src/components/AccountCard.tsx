@@ -7,9 +7,14 @@ interface AccountCardProps {
 export default function AccountCard({
   account,
 }: AccountCardProps) {
+  const accountType =
+    account.account_type === "savings"
+      ? "Savings Account"
+      : "Checking Account";
+
   return (
     <div>
-      <h3>{account.account_type}</h3>
+      <h3>{accountType}</h3>
 
       <p>
         {account.currency} {account.balance}

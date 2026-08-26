@@ -9,6 +9,7 @@ from app.core.database import get_db
 from app.schemas.account import AccountCreate, AccountResponse, BalanceResponse
 from app.schemas.customer import CustomerCreate, CustomerResponse
 from app.schemas.transaction import TransactionCreate, TransactionResponse
+from app.schemas.chat import ChatRequest, ChatResponse
 from app.services.account_service import AccountService
 from app.services.customer_service import CustomerService
 from app.services.transaction_service import TransactionService
@@ -89,13 +90,13 @@ def list_transactions(
     return [TransactionResponse.model_validate(transaction) for transaction in transactions]
 
 
-@router.post("/chat")
+@router.post("/chat", response_model=ChatResponse)
 def chat(
-    message: str,
+    payload: ChatRequest,
     agent: BankingAgent,
 ):
     result = agent.invoke(
-        {"messages": [{"role": "user", "content": message}]},
+        {"messages": [{"role": "user", "content": payload.message}]},
         config={
             "run_name": "banking-chat",
             "tags": ["banking-agent"],

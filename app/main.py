@@ -13,6 +13,8 @@ from app.core.database import Base, engine
 from app.services.exceptions import BusinessRuleError, ConflictError, NotFoundError
 from app.agents.agent import build_agent
 
+from fastapi.middleware.cors import CORSMiddleware
+
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     """Create database tables on startup for this lightweight application."""
@@ -32,6 +34,13 @@ app = FastAPI(
 )
 app.include_router(router)
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 @app.get("/health", tags=["operations"])
 def health() -> dict[str, str]:

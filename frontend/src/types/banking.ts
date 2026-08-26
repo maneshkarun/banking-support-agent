@@ -1,3 +1,16 @@
+export type AccountType =
+  | "savings"
+  | "checking";
+
+export type AccountStatus =
+  | "active"
+  | "frozen"
+  | "closed";
+
+export type TransactionType =
+  | "credit"
+  | "debit";
+
 export interface Customer {
   id: number;
   full_name: string;
@@ -12,22 +25,23 @@ export interface Account {
   account_type: string;
   status: string;
   currency: string;
-  balance: number;
+  balance: string;
   created_at: string;
 }
 
 export interface Balance {
   account_number: string;
   currency: string;
-  balance: number;
+  balance: string;
 }
 
 export interface Transaction {
   id: number;
   account_id: number;
   transaction_type: string;
-  amount: number;
+  amount: string;
   description: string | null;
   reference: string;
   created_at: string;
 }
+
