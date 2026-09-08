@@ -44,11 +44,15 @@ export async function getTransactions(
   return request(`/customers/${customerId}/accounts/${accountNumber}/transactions?limit=${limit}&offset=${offset}`);
 }
 
-export async function askBankingAgent(message: string): Promise<string> {
-  const result = await request<{ response: string }>("/chat", {
+export interface ChatResult {
+  response: string;
+  account_options: Account[];
+}
+
+export async function askBankingAgent(message: string): Promise<ChatResult> {
+  return request<ChatResult>("/chat", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ message }),
   });
-  return result.response;
 }

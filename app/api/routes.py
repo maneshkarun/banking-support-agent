@@ -1,5 +1,6 @@
 """Version 1 banking API routes."""
 
+import json
 from typing import Annotated, List, Any
 
 from fastapi import APIRouter, Depends, Query, status
@@ -155,6 +156,28 @@ def chat(
         },
     )
 
-    return {
-        "response": result["messages"][-1].content
-    }
+    return ChatResponse(
+        response=result["messages"][-1].content,
+        account_options=_account_options_from_tool_result(result["messages"]),
+    )
+
+
+def _account_options_from_tool_result(messages: list[Any]) -> list[AccountResponse]:
+    """Expose account-list tool results as typed UI data, when the agent used that tool."""
+
+    for message in reversed(messages):
+        if getattr(message, "name", None) != "get_customer_accounts":
+            continue
+        content = message.content
+        if isinstance(content, str):
+            try:
+                content = json.loads(content)
+            except json.JSONDecodeError:
+                return []
+        if not isinstance(content, list):
+            return []
+        try:
+            return [AccountResponse.model_validate(account) for account in content]
+        except (TypeError, ValueError):
+            return []
+    return []
