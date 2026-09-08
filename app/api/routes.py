@@ -45,6 +45,13 @@ def create_account(customer_id: int, payload: AccountCreate, db: DbSession) -> A
     return AccountResponse.model_validate(AccountService(db).create(customer_id, payload))
 
 
+@router.post("/accounts", response_model=AccountResponse, status_code=status.HTTP_201_CREATED)
+def create_account_legacy(payload: AccountCreate, db: DbSession) -> AccountResponse:
+    """Compatibility endpoint for the original account API."""
+
+    return AccountResponse.model_validate(AccountService(db).create(payload.customer_id, payload))
+
+
 @router.get("/customers/{customer_id}/accounts/{account_number}", response_model=AccountResponse)
 def get_account(customer_id: int, account_number: str, db: DbSession) -> AccountResponse:
     """Retrieve account information."""
@@ -59,8 +66,15 @@ def get_balance(customer_id: int, account_number: str, db: DbSession) -> Balance
     return AccountService(db).get_balance(customer_id, account_number)
 
 
+@router.get("/accounts/{account_number}/balance", response_model=BalanceResponse)
+def get_balance_legacy(account_number: str, db: DbSession) -> BalanceResponse:
+    """Compatibility endpoint for the original account API."""
+
+    return AccountService(db).get_balance(account_number)
+
+
 @router.post(
-    "/customers/{customers_id}/accounts/{account_number}/transactions",
+    "/customers/{customer_id}/accounts/{account_number}/transactions",
     response_model=TransactionResponse,
     status_code=status.HTTP_201_CREATED,
 )
@@ -74,8 +88,24 @@ def create_transaction(
     )
 
 
+@router.post(
+    "/accounts/{account_number}/transactions",
+    response_model=TransactionResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+def create_transaction_legacy(
+    account_number: str, payload: TransactionCreate, db: DbSession
+) -> TransactionResponse:
+    """Compatibility endpoint for the original account API."""
+
+    account = AccountService(db).get(account_number)
+    return TransactionResponse.model_validate(
+        TransactionService(db).create(account.customer_id, account_number, payload)
+    )
+
+
 @router.get(
-    "/customers/{customers_id}/accounts/{account_number}/transactions", response_model=list[TransactionResponse]
+    "/customers/{customer_id}/accounts/{account_number}/transactions", response_model=list[TransactionResponse]
 )
 def list_transactions(
     customer_id: int,
@@ -87,6 +117,24 @@ def list_transactions(
     """Retrieve paginated transaction history."""
 
     transactions = TransactionService(db).list_for_account(customer_id, account_number, limit, offset)
+    return [TransactionResponse.model_validate(transaction) for transaction in transactions]
+
+
+@router.get(
+    "/accounts/{account_number}/transactions", response_model=list[TransactionResponse]
+)
+def list_transactions_legacy(
+    account_number: str,
+    db: DbSession,
+    limit: Annotated[int, Query(ge=1, le=100)] = 20,
+    offset: Annotated[int, Query(ge=0)] = 0,
+) -> list[TransactionResponse]:
+    """Compatibility endpoint for the original account API."""
+
+    account = AccountService(db).get(account_number)
+    transactions = TransactionService(db).list_for_account(
+        account.customer_id, account_number, limit, offset
+    )
     return [TransactionResponse.model_validate(transaction) for transaction in transactions]
 
 

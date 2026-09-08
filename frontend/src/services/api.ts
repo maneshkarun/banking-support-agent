@@ -5,63 +5,50 @@ import type {
   Transaction,
 } from "../types/banking";
 
-const API_URL = "http://localhost:8000/api/v1";
+const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:8000/api/v1";
+
+async function request<T>(path: string, options?: RequestInit): Promise<T> {
+  const response = await fetch(`${API_URL}${path}`, options);
+  if (!response.ok) {
+    const body = await response.json().catch(() => null);
+    throw new Error(body?.detail ?? "The request could not be completed.");
+  }
+  return response.json() as Promise<T>;
+}
 
 export async function getCustomer(
   customerId: number
 ): Promise<Customer> {
-  const response = await fetch(
-    `${API_URL}/customers/${customerId}`
-  );
-
-  if (!response.ok) {
-    throw new Error("Failed to fetch customer");
-  }
-
-  return response.json();
+  return request(`/customers/${customerId}`);
 }
 
 export async function getCustomerAccounts(
   customerId: number
 ): Promise<Account[]> {
-  const response = await fetch(
-    `${API_URL}/customers/${customerId}/accounts`
-  );
-
-  if (!response.ok) {
-    throw new Error("Failed to fetch accounts");
-  }
-
-  return response.json();
+  return request(`/customers/${customerId}/accounts`);
 }
 
 export async function getBalance(
   customerId: number,
   accountNumber: string
 ): Promise<Balance> {
-  const response = await fetch(
-    `${API_URL}/customers/${customerId}/accounts/${accountNumber}/balance`
-  );
-
-  if (!response.ok) {
-    throw new Error("Failed to fetch balance");
-  }
-
-  return response.json();
+  return request(`/customers/${customerId}/accounts/${accountNumber}/balance`);
 }
 
 export async function getTransactions(
+  customerId: number,
   accountNumber: string,
   limit = 20,
   offset = 0
 ): Promise<Transaction[]> {
-  const response = await fetch(
-    `${API_URL}/accounts/${accountNumber}/transactions?limit=${limit}&offset=${offset}`
-  );
+  return request(`/customers/${customerId}/accounts/${accountNumber}/transactions?limit=${limit}&offset=${offset}`);
+}
 
-  if (!response.ok) {
-    throw new Error("Failed to fetch transactions");
-  }
-
-  return response.json();
+export async function askBankingAgent(message: string): Promise<string> {
+  const result = await request<{ response: string }>("/chat", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ message }),
+  });
+  return result.response;
 }

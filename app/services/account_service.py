@@ -37,12 +37,20 @@ class AccountService:
         self.session.refresh(account)
         return account
 
-    def get(self, customer_id: int, account_number: str) -> Account:
+    def get(self, customer_id: int | str, account_number: str | None = None) -> Account:
         """Return account information by account number."""
 
-        account = self.session.scalar(
-            select(Account).where(Account.account_number == account_number and Account.customer_id == customer_id)
-        )
+        if account_number is None:
+            account = self.session.scalar(
+                select(Account).where(Account.account_number == customer_id)
+            )
+        else:
+            account = self.session.scalar(
+                select(Account).where(
+                    Account.account_number == account_number,
+                    Account.customer_id == customer_id,
+                )
+            )
         if account is None:
             raise NotFoundError("Account not found")
         return account
@@ -55,10 +63,12 @@ class AccountService:
             AccountResponse.model_validate(account) for account in accounts
         ]
     
-    def get_balance(self, customer_id: int, account_number: str) -> BalanceResponse:
+    def get_balance(
+        self, customer_id: int | str, account_number: str | None = None
+    ) -> BalanceResponse:
         """Return the current ledger balance for an account."""
 
-        account = self.get(account_number, customer_id)
+        account = self.get(customer_id, account_number)
         return BalanceResponse(
             account_number=account.account_number,
             currency=account.currency,

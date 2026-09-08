@@ -41,7 +41,6 @@ def get_account_balance(account_number: str, customer_id: int | None = None) -> 
         balance = AccountService(session).get_balance(account_number)
         return balance.model_dump(mode="json")
 
-
 @tool
 def get_complete_account_details(account_number: str) -> dict[str, Any]:
     """Fetch account details given an account number."""
