@@ -153,6 +153,9 @@ def chat(
                 "environment": "development",
                 "agent_version": "v1",
             },
+            "configurable": {
+                "thread_id": "conversation-123"
+            }
         },
     )
 

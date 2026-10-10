@@ -4,6 +4,7 @@ from typing import Any
 
 from langchain.agents import create_agent
 from langchain_openai import ChatOpenAI
+from langgraph.checkpoint.memory import InMemorySaver
 
 from app.tools.banking_tools import (
     get_account_balance,
@@ -15,16 +16,19 @@ from app.tools.banking_tools import (
 
 def build_agent() -> Any:
     """Build and return the banking agent with its read-only tools."""
-
+    
     llm = ChatOpenAI(
-        model="models/Qwen3.8-27B-UD-Q3_K_XL.gguf",
+        model= "Qwen3.8-27B-UD-Q3_K_XL",
         base_url="http://localhost:8080/v1",
         api_key="local-development-key",
     )
+
+    checkpointer = InMemorySaver()
     return create_agent(
         model=llm,
         tools=[get_account_balance, get_complete_account_details, get_customer_details, get_customer_accounts],
         system_prompt="You are a helpful banking assistant.",
+        checkpointer=checkpointer
     )
 
 
